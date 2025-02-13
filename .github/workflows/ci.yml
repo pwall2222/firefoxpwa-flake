@@ -1,0 +1,47 @@
+name: CI
+
+on:
+  pull_request:
+  merge_group:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        architecture:
+          - system: x86_64-linux
+            runner: [linux, X64, ktisis, ktisis-c3d-highmem-8, ktisis-30GB]
+
+    name: Build - ${{ matrix.architecture.system }}
+    runs-on: ${{ matrix.architecture.runner }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: DeterminateSystems/nix-installer-action@v16
+        with:
+          diagnostic-endpoint: ''
+          source-url: 'https://install.lix.systems/lix/lix-installer-${{ matrix.architecture.system }}'
+
+      - uses: cachix/cachix-action@v15
+        with:
+          name: firefoxpwa
+          authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
+
+      - env:
+          SYSTEM: ${{ matrix.architecture.system }}
+        run: |
+          nix -L build --show-trace --cores 0 --max-jobs 1 --system "$SYSTEM"
+
+      - name: Pin store path in Cachix
+        env:
+          SYSTEM: ${{ matrix.architecture.system }}
+        run: |
+          storepath="$(nix eval --raw --system "$SYSTEM")"
+          cachix push firefoxpwa "$storepath"
+          cachix pin firefoxpwa "$SYSTEM" "$storepath" --keep-revisions 1
+        if: ${{ github.ref == 'refs/heads/main' }}

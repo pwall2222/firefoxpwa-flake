@@ -1,0 +1,52 @@
+name: Update package
+
+on:
+  schedule:
+    - cron: '0 23 * * *'
+  workflow_dispatch:
+
+jobs:
+  update:
+    name: Update package version & hash
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: DeterminateSystems/nix-installer-action@v16
+        with:
+          diagnostic-endpoint: ''
+          source-url: 'https://install.lix.systems/lix/lix-installer-x86_64-linux'
+
+      - uses: cachix/cachix-action@v15
+        with:
+          name: firefoxpwa
+
+      - name: Configure git
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+
+      - run: nix -vL run --show-trace .#update
+
+      - id: create-pr
+        uses: peter-evans/create-pull-request@v7
+        with:
+          branch: update_package_action
+          delete-branch: true
+          committer: 'github-actions[bot] <github-actions[bot]@users.noreply.github.com>'
+          author: 'github-actions[bot] <github-actions[bot]@users.noreply.github.com>'
+          commit-message: 'pkgs: update pkg'
+          title: 'pkgs: update pkg'
+          labels: 'dependencies'
+          body: |
+            Automated bump of packages
+
+      - uses: benc-uk/workflow-dispatch@v1
+        if: ${{ contains(fromJSON('["created", "updated"]'), steps.create-pr.outputs.pull-request-operation) }}
+        with:
+          workflow: ci.yml
+          ref: refs/heads/update_package_action
