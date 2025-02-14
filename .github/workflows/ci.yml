@@ -14,7 +14,7 @@ jobs:
       matrix:
         architecture:
           - system: x86_64-linux
-            runner: [linux, X64, ktisis, ktisis-c3d-highmem-8, ktisis-30GB]
+            runner: ubuntu-latest
 
     name: Build - ${{ matrix.architecture.system }}
     runs-on: ${{ matrix.architecture.runner }}
