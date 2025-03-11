@@ -27,7 +27,7 @@ jobs:
           diagnostic-endpoint: ''
           source-url: 'https://install.lix.systems/lix/lix-installer-${{ matrix.architecture.system }}'
 
-      - uses: cachix/cachix-action@v15
+      - uses: cachix/cachix-action@v16
         with:
           name: firefoxpwa
           authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
