@@ -43,7 +43,7 @@ jobs:
           title: 'pkgs: update pkg'
           labels: 'dependencies'
           body: |
-            Automated bump of packages
+            Automated bump of packages ; @pwall2222
 
       - uses: benc-uk/workflow-dispatch@v1
         if: ${{ contains(fromJSON('["created", "updated"]'), steps.create-pr.outputs.pull-request-operation) }}
